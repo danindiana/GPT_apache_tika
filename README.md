@@ -11,6 +11,7 @@ A comprehensive guide and toolkit for running Apache Tika in parallel to convert
 - [Installation](#installation)
 - [Usage](#usage)
 - [Workflow Diagrams](#workflow-diagrams)
+- [Testing](#testing)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -623,6 +624,46 @@ stateDiagram-v2
         Corrupted PDF
     end note
 ```
+
+## Testing
+
+This project includes a comprehensive integration test suite that validates all workflows across multiple platforms.
+
+### Running Tests Locally
+
+```bash
+# Set up environment
+export TIKA_JAR=/path/to/tika-app-2.9.1.jar
+
+# Run all integration tests
+./tests/run_integration_tests.sh
+
+# Run individual test suites
+./tests/integration/test_tika_setup.sh
+./tests/integration/test_single_file_conversion.sh
+./tests/integration/test_tika_server.sh
+./tests/integration/test_parallel_processing.sh
+./tests/integration/test_error_handling.sh
+```
+
+### Test Suites
+
+1. **Setup and Installation** - Validates environment and dependencies
+2. **Single File Conversion** - Tests basic Tika functionality
+3. **Server Workflow** - Tests Tika server mode and endpoints
+4. **Parallel Processing** - Tests GNU Parallel integration and performance
+5. **Error Handling** - Tests edge cases and error recovery
+
+For detailed test documentation, see [tests/README.md](tests/README.md).
+
+### Continuous Integration
+
+All tests run automatically on:
+- Push to main or feature branches
+- Pull requests
+- Multiple platforms (Ubuntu, macOS)
+
+View CI/CD results in the [Actions tab](../../actions).
 
 ## Workflow Diagrams
 

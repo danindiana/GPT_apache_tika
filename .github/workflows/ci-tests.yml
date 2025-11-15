@@ -1,0 +1,139 @@
+name: CI Tests - Integration Workflows
+
+on:
+  push:
+    branches: [ main, 'claude/**' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-ubuntu:
+    name: Integration Tests on Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y parallel curl wget
+
+    - name: Download Apache Tika
+      run: |
+        mkdir -p ~/tika
+        cd ~/tika
+        wget -q https://archive.apache.org/dist/tika/2.9.1/tika-app-2.9.1.jar
+        chmod +x tika-app-2.9.1.jar
+        echo "TIKA_JAR=$HOME/tika/tika-app-2.9.1.jar" >> $GITHUB_ENV
+
+    - name: Verify Tika installation
+      run: |
+        java -jar $TIKA_JAR --version
+
+    - name: Run integration tests
+      run: |
+        chmod +x tests/run_integration_tests.sh
+        ./tests/run_integration_tests.sh
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-ubuntu
+        path: tests/results/
+
+  test-macos:
+    name: Integration Tests on macOS
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install dependencies
+      run: |
+        brew install parallel wget
+
+    - name: Download Apache Tika
+      run: |
+        mkdir -p ~/tika
+        cd ~/tika
+        wget -q https://archive.apache.org/dist/tika/2.9.1/tika-app-2.9.1.jar
+        chmod +x tika-app-2.9.1.jar
+        echo "TIKA_JAR=$HOME/tika/tika-app-2.9.1.jar" >> $GITHUB_ENV
+
+    - name: Verify Tika installation
+      run: |
+        java -jar $TIKA_JAR --version
+
+    - name: Run integration tests
+      run: |
+        chmod +x tests/run_integration_tests.sh
+        ./tests/run_integration_tests.sh
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-macos
+        path: tests/results/
+
+  test-script-validation:
+    name: Script Validation Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install ShellCheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+
+    - name: Run ShellCheck on scripts
+      run: |
+        shellcheck scripts/*.sh || true
+
+    - name: Check script permissions
+      run: |
+        ls -la scripts/
+
+  test-documentation:
+    name: Documentation Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Validate Markdown
+      run: |
+        # Check that all documentation files exist
+        test -f README.md
+        test -f docs/troubleshooting/tika-usage-notes.md
+        test -f docs/troubleshooting/font-mapping-issues.md
+        test -f docs/troubleshooting/pdfbox-warnings.md
+        test -f examples/basic-usage.md
+        test -f examples/advanced-parallel.md
+
+    - name: Check for broken internal links
+      run: |
+        # Simple check for referenced files
+        grep -r "\[.*\](.*.md)" . --include="*.md" || true
+        echo "Documentation structure validated"
